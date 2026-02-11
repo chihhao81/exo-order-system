@@ -3,7 +3,8 @@ export const BANK_ACCOUNTS = [
     { id: 'B', label: '少鈞', bankName: '國泰世華', bankCode: '013', accountNumber: '699513716269' },
     { id: 'C', label: '鈞媽', bankName: '中國信託', bankCode: '822', accountNumber: '0000107531864731' },
     { id: 'D', label: '傑', bankName: '新光銀行', bankCode: '103', accountNumber: '0338501170734' },
-    { id: 'E', label: '郁幃', bankName: '玉山銀行', bankCode: '808', accountNumber: '0968979255' } // Wait, user said E is 玉山銀行（103）0338501170734 which is same as D?
+    { id: 'E', label: '郁幃', bankName: '玉山銀行', bankCode: '808', accountNumber: '0968979255' }, // Wait, user said E is 玉山銀行（103）0338501170734 which is same as D?
+    { id: 'F', label: '賣貨便', bankName: '賣貨便', bankCode: '', accountNumber: '' },
     // Let me re-read user request carefully.
     // D. 傑 新光銀行（103） 0338501170734
     // E. 郁幃 玉山銀行（103） 0338501170734
