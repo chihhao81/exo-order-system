@@ -31,6 +31,7 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
     const [selectedBankId, setSelectedBankId] = useState(BANK_ACCOUNTS[0].id);
     const [shippingFee, setShippingFee] = useState(0);
     const [remittanceAccount, setRemittanceAccount] = useState('');
+    const [orderNumber, setOrderNumber] = useState('');
 
     const [modalOpen, setModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
@@ -98,6 +99,7 @@ ${bank.accountNumber}
     };
 
     const handleReview = () => {
+        if (!apiKey) return alert('請輸入 API Key');
         if (!customerId) return alert('請輸入客戶編號');
         if (items.some(i => !i.product || !i.price)) return alert('請完整填寫產品資訊');
         // valid even if 0, but must be present (initialized to 0 so typically handled)
@@ -125,6 +127,7 @@ ${bank.accountNumber}
                 receiveAccount: `${bank.accountNumber.slice(-5)}-${bank.label}`,
                 shippingFee: shippingFee,
                 userRemittanceAccount: remittanceAccount, // Added new field
+                orderNumber: orderNumber,
                 timeItem: timeItem
             };
 
@@ -145,6 +148,7 @@ ${bank.accountNumber}
             setCustomerId('');
             setShippingFee(0);
             setRemittanceAccount('');
+            // orderNumber is NOT cleared as requested
         } catch (error) {
             console.error("Order creation flow error:", error);
             alert('建立失敗，請稍後再試: ' + (error.message || '未知錯誤'));
@@ -346,6 +350,16 @@ ${bank.accountNumber}
                     value={orderDate}
                     onChange={e => setOrderDate(e.target.value)}
                     placeholder="例如：2/14"
+                />
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>訂單號碼 (選填)</label>
+                <input
+                    type="text"
+                    value={orderNumber}
+                    onChange={e => setOrderNumber(e.target.value)}
+                    placeholder="請輸入訂單號碼"
                 />
             </div>
 

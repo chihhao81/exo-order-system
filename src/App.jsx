@@ -45,7 +45,7 @@ function App() {
     return (
         <div className="app-container">
             <header className="app-header">
-                <h1>ExoOrder System</h1>
+                <h1>鼠婦7D Order System</h1>
 
                 <div className="api-key-container glass-card" style={{ padding: '0.5rem 1rem', width: '100%', maxWidth: '400px', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                     <span style={{ whiteSpace: 'nowrap', fontSize: '0.9rem', color: '#94a3b8' }}>API Key:</span>
