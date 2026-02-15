@@ -3,31 +3,43 @@ import './index.css'
 import CustomerForm from './components/CustomerForm';
 import OrderForm from './components/OrderForm';
 import { getProducts } from './api/client';
+import packageJson from '../package.json'
 
 function App() {
     const [activeTab, setActiveTab] = useState('order');
     const [apiKey, setApiKey] = useState(() => localStorage.getItem('exo_api_key') || '');
 
     // Product List Cache
-    const [productsList, setProductsList] = useState([]);
+    const [productsList, setProductsList] = useState(() => {
+        const cached = localStorage.getItem('exo_products_cache');
+        return cached ? JSON.parse(cached) : [];
+    });
     const [loadingProducts, setLoadingProducts] = useState(false);
+
+    const loadProducts = async () => {
+        setLoadingProducts(true);
+        try {
+            const data = await getProducts();
+            if (Array.isArray(data)) {
+                setProductsList(data);
+                localStorage.setItem('exo_products_cache', JSON.stringify(data));
+            }
+        } catch (error) {
+            console.error("Failed to load products:", error);
+        } finally {
+            setLoadingProducts(false);
+        }
+    };
 
     useEffect(() => {
         localStorage.setItem('exo_api_key', apiKey);
     }, [apiKey]);
 
-    // Fetch products once on mount
+    // Fetch products once on mount if cache is empty
     useEffect(() => {
-        setLoadingProducts(true);
-        getProducts().then(data => {
-            // Handle potential non-array response from safeJson fallback
-            if (Array.isArray(data)) {
-                setProductsList(data);
-            } else {
-                setProductsList([]);
-            }
-            setLoadingProducts(false);
-        });
+        if (productsList.length === 0) {
+            loadProducts();
+        }
     }, []);
 
     return (
@@ -67,10 +79,14 @@ function App() {
                         apiKey={apiKey}
                         productsList={productsList}
                         loadingProducts={loadingProducts}
+                        refreshProducts={loadProducts}
                     /> :
                     <CustomerForm apiKey={apiKey} />
                 }
             </main>
+            <div className="app-version">
+                v{packageJson.version}
+            </div>
         </div>
     )
 }

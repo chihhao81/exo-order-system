@@ -5,8 +5,18 @@ import { BANK_ACCOUNTS } from '../constants';
 const SIZES = ['0.3cm以上', '0.5cm以上', '亞成成體', '無'];
 const UNITS = ['隻', '克', '個'];
 
-const OrderForm = ({ apiKey, productsList, loadingProducts }) => {
+const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) => {
     // productsList and loadingProducts are now passed from props
+
+    // Helper to prevent number input scrolling or arrow key changes
+    const disableNumberInputProps = {
+        onWheel: (e) => e.target.blur(),
+        onKeyDown: (e) => {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+            }
+        }
+    };
 
     const [customerId, setCustomerId] = useState('');
     const [orderDate, setOrderDate] = useState(() => {
@@ -19,10 +29,13 @@ const OrderForm = ({ apiKey, productsList, loadingProducts }) => {
     ]);
 
     const [selectedBankId, setSelectedBankId] = useState(BANK_ACCOUNTS[0].id);
+    const [shippingFee, setShippingFee] = useState(0);
+    const [remittanceAccount, setRemittanceAccount] = useState('');
 
     const [modalOpen, setModalOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [generatedText, setGeneratedText] = useState('');
+    const [timeItem, setTimeItem] = useState('');
 
     const handleItemChange = (id, field, value) => {
         setItems(items.map(item =>
@@ -41,7 +54,8 @@ const OrderForm = ({ apiKey, productsList, loadingProducts }) => {
     };
 
     const calculateTotal = () => {
-        return items.reduce((sum, item) => sum + (parseInt(item.price) || 0), 0);
+        const itemsTotal = items.reduce((sum, item) => sum + (parseInt(item.price) || 0), 0);
+        return itemsTotal + (parseInt(shippingFee) || 0);
     };
 
     const formatProductName = (item) => {
@@ -57,7 +71,7 @@ const OrderForm = ({ apiKey, productsList, loadingProducts }) => {
 
         // Build calculation string: "100+200=?" logic
         const priceParts = items.map(item => item.price || '0');
-        const calcString = `${priceParts.join('+')}+運費=?`;
+        const calcString = `${priceParts.join('+')}+${shippingFee}=${calculateTotal()}`;
 
         const itemLines = items.map(item => {
             const displayName = formatProductName(item);
@@ -86,6 +100,8 @@ ${bank.accountNumber}
     const handleReview = () => {
         if (!customerId) return alert('請輸入客戶編號');
         if (items.some(i => !i.product || !i.price)) return alert('請完整填寫產品資訊');
+        // valid even if 0, but must be present (initialized to 0 so typically handled)
+        if (shippingFee === '' || shippingFee === null) return alert('請輸入運費');
 
         setGeneratedText(generateOrderText());
         setModalOpen(true);
@@ -100,12 +116,16 @@ ${bank.accountNumber}
                 customer: customerId,
                 orderDate: orderDate,
                 items: items.map(item => ({
-                    product: formatProductName(item), // Use formatted name
+                    name: item.product,
+                    quantity: item.quantity,
+                    unit: item.unit,
                     size: item.size,
                     price: item.price
                 })),
                 receiveAccount: `${bank.accountNumber.slice(-5)}-${bank.label}`,
-                shippingFee: "0" // Removed by user request
+                shippingFee: shippingFee,
+                userRemittanceAccount: remittanceAccount, // Added new field
+                timeItem: timeItem
             };
 
             await createOrder(payload, apiKey);
@@ -123,6 +143,8 @@ ${bank.accountNumber}
             setModalOpen(false);
             setItems([{ id: Date.now(), product: '', size: SIZES[0], price: '', quantity: '', unit: UNITS[0] }]);
             setCustomerId('');
+            setShippingFee(0);
+            setRemittanceAccount('');
         } catch (error) {
             console.error("Order creation flow error:", error);
             alert('建立失敗，請稍後再試: ' + (error.message || '未知錯誤'));
@@ -144,8 +166,41 @@ ${bank.accountNumber}
                 />
             </div>
 
+            <div className="form-group">
+                <label>時間/項目 (選填)</label>
+                <input
+                    value={timeItem}
+                    onChange={e => setTimeItem(e.target.value)}
+                    placeholder="例如：14:00 / 項目A"
+                />
+            </div>
+
             <div className="items-list">
-                <h3>產品列表</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0 }}>產品列表</h3>
+                    <button
+                        className="refresh-btn"
+                        onClick={refreshProducts}
+                        disabled={loadingProducts}
+                    >
+                        <svg
+                            className={loadingProducts ? 'spinning' : ''}
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                        >
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        刷新清單
+                    </button>
+                </div>
 
                 {loadingProducts && (
                     <div style={{ textAlign: 'center', padding: '1rem', color: '#94a3b8' }}>
@@ -175,6 +230,7 @@ ${bank.accountNumber}
                                     value={item.quantity}
                                     onChange={e => handleItemChange(item.id, 'quantity', e.target.value)}
                                     placeholder="10"
+                                    {...disableNumberInputProps}
                                     style={{ padding: '0.5rem' }}
                                 />
                             </div>
@@ -207,6 +263,7 @@ ${bank.accountNumber}
                                     type="number"
                                     value={item.price}
                                     onChange={e => handleItemChange(item.id, 'price', e.target.value)}
+                                    {...disableNumberInputProps}
                                     placeholder="$"
                                 />
                             </div>
@@ -245,6 +302,17 @@ ${bank.accountNumber}
             </datalist>
 
             <div className="form-group" style={{ marginTop: '2rem' }}>
+                <label>運費</label>
+                <input
+                    type="number"
+                    value={shippingFee}
+                    onChange={e => setShippingFee(e.target.value)}
+                    {...disableNumberInputProps}
+                    placeholder="0"
+                />
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label>匯款帳號</label>
                 <select
                     value={selectedBankId}
@@ -259,6 +327,26 @@ ${bank.accountNumber}
                 <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>
                     帳號：{BANK_ACCOUNTS.find(b => b.id === selectedBankId)?.accountNumber}
                 </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>使用者匯款帳號 (末五碼/選填)</label>
+                <input
+                    type="text"
+                    value={remittanceAccount}
+                    onChange={e => setRemittanceAccount(e.target.value)}
+                    placeholder="例如：12345"
+                />
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>匯款日期 (選填)</label>
+                <input
+                    type="text"
+                    value={orderDate}
+                    onChange={e => setOrderDate(e.target.value)}
+                    placeholder="例如：2/14"
+                />
             </div>
 
             <button className="primary-btn" onClick={handleReview}>
