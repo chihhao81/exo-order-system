@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbynsFR_9HawNOKxz7Eurrk9uduDh_EcFCGEUTLkXKcO4zq1n7zKGFw24RDs8d4Qi4MKBw/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbxd9MNmY4mMqHCRpHjSA1oPMIVpFqtmRVl2-IUwUr3FQL9YcZtrYHybApiRv14rv7deaA/exec";
 
 const safeJson = async (response) => {
     const text = await response.text();
