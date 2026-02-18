@@ -44,33 +44,56 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
 
     const handleImport = () => {
         try {
-            const data = JSON.parse(importText);
-            if (data.customerId) setCustomerId(data.customerId);
-            if (data.timeItem) setTimeItem(data.timeItem);
-            if (data.shippingFee !== undefined) setShippingFee(data.shippingFee);
-            if (data.items) setItems(data.items.map(i => ({ ...i, id: Date.now() + Math.random() })));
-            alert('數據匯入成功！');
+            const text = importText.trim();
+            if (!text) return;
+
+            // Compact format v1: v1|customerId|timeItem|shippingFee|P:prod,sIdx,p,q,uIdx;...
+            if (text.startsWith('v1|')) {
+                const parts = text.split('|');
+                if (parts.length < 5) throw new Error('Format error');
+
+                const [, cust, time, fee, itemsPart] = parts;
+                setCustomerId(cust);
+                setTimeItem(time);
+                setShippingFee(parseInt(fee) || 0);
+
+                const importedItems = itemsPart.split(';').filter(Boolean).map(itemStr => {
+                    const [p, sIdx, price, q, uIdx] = itemStr.split(',');
+                    return {
+                        id: Date.now() + Math.random(),
+                        product: p,
+                        size: SIZES[parseInt(sIdx)] || SIZES[0],
+                        price: price,
+                        quantity: q,
+                        unit: UNITS[parseInt(uIdx)] || UNITS[0]
+                    };
+                });
+                if (importedItems.length > 0) setItems(importedItems);
+                alert('緊湊數據匯入成功！');
+            } else {
+                // Legacy JSON support
+                const data = JSON.parse(text);
+                if (data.customerId) setCustomerId(data.customerId);
+                if (data.timeItem) setTimeItem(data.timeItem);
+                if (data.shippingFee !== undefined) setShippingFee(data.shippingFee);
+                if (data.items) setItems(data.items.map(i => ({ ...i, id: Date.now() + Math.random() })));
+                alert('JSON 數據匯入成功！');
+            }
             setShowImport(false);
             setImportText('');
         } catch (e) {
-            alert('匯入格式錯誤，請確定是正確的 JSON 格式');
+            alert('匯入格式錯誤：' + e.message);
         }
     };
 
-    const generateBackupJson = () => {
-        const data = {
-            customerId,
-            timeItem,
-            shippingFee,
-            items: items.map(i => ({
-                product: i.product,
-                size: i.size,
-                price: i.price,
-                quantity: i.quantity,
-                unit: i.unit
-            }))
-        };
-        return JSON.stringify(data);
+    const generateBackupString = () => {
+        const itemStrings = items.map(i => {
+            const sIdx = SIZES.indexOf(i.size);
+            const uIdx = UNITS.indexOf(i.unit);
+            return `${i.product},${sIdx >= 0 ? sIdx : 0},${i.price},${i.quantity},${uIdx >= 0 ? uIdx : 0}`;
+        }).join(';');
+
+        return `v1|${customerId}|${timeItem}|${shippingFee}|${itemStrings}`;
     };
 
     const handleItemChange = (id, field, value) => {
@@ -137,7 +160,7 @@ ${bank.accountNumber}
         if (items.some(i => !i.product)) return alert('請填寫產品名稱');
 
         setGeneratedText(generateOrderText());
-        setBackupJson(generateBackupJson());
+        setBackupJson(generateBackupString());
         setShowPreviewModal(true);
     };
 
@@ -391,17 +414,6 @@ ${bank.accountNumber}
                 {productsList.map((p, i) => <option key={i} value={p} />)}
             </datalist>
 
-            <div className="form-group" style={{ marginTop: '1.5rem' }}>
-                <label>運費</label>
-                <input
-                    type="number"
-                    value={shippingFee}
-                    onChange={e => setShippingFee(e.target.value)}
-                    {...disableNumberInputProps}
-                    placeholder="0"
-                />
-            </div>
-
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
                 <button className="primary-btn" onClick={handleReview} style={{ flex: 1, background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)' }}>
                     產生總結與預覽
@@ -410,6 +422,17 @@ ${bank.accountNumber}
 
             <div className="section-title" style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', margin: '2rem 0 1rem 0' }}>
                 第二階段：匯款與正式入帳
+            </div>
+
+            <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label>運費</label>
+                <input
+                    type="number"
+                    value={shippingFee}
+                    onChange={e => setShippingFee(e.target.value)}
+                    {...disableNumberInputProps}
+                    placeholder="0"
+                />
             </div>
 
             <div className="form-group" style={{ marginTop: '1rem' }}>
@@ -497,11 +520,11 @@ ${bank.accountNumber}
                             複製總結文字
                         </button>
 
-                        <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>數據備份 (供日後匯入)：</label>
+                        <label style={{ fontSize: '0.8rem', color: '#94a3b8' }}>數據備份 (極短壓縮版)：</label>
                         <textarea
                             readOnly
                             value={backupJson}
-                            style={{ width: '100%', height: '60px', background: 'rgba(0,0,0,0.2)', border: '1px solid #444', color: '#888', borderRadius: '4px', padding: '0.5rem', fontSize: '0.7rem', marginTop: '0.5rem' }}
+                            style={{ width: '100%', height: '50px', background: 'rgba(0,0,0,0.2)', border: '1px solid #444', color: '#888', borderRadius: '4px', padding: '0.5rem', fontSize: '0.75rem', marginTop: '0.5rem', wordBreak: 'break-all' }}
                         />
                         <button
                             className="secondary-btn"
