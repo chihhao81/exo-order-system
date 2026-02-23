@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './index.css'
 import CustomerForm from './components/CustomerForm';
 import OrderForm from './components/OrderForm';
+import ArrangeShipmentTab from './components/ArrangeShipmentTab';
 import { getProducts } from './api/client';
 import packageJson from '../package.json'
 
@@ -71,18 +72,25 @@ function App() {
                     >
                         建立客戶
                     </button>
+                    <button
+                        className={`tab-btn ${activeTab === 'arrange' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('arrange')}
+                    >
+                        安排出貨
+                    </button>
                 </nav>
             </header>
             <main className="app-content">
-                {activeTab === 'order' ?
+                {activeTab === 'order' && (
                     <OrderForm
                         apiKey={apiKey}
                         productsList={productsList}
                         loadingProducts={loadingProducts}
                         refreshProducts={loadProducts}
-                    /> :
-                    <CustomerForm apiKey={apiKey} />
-                }
+                    />
+                )}
+                {activeTab === 'customer' && <CustomerForm apiKey={apiKey} />}
+                {activeTab === 'arrange' && <ArrangeShipmentTab apiKey={apiKey} />}
             </main>
             <div className="app-version">
                 v{packageJson.version}

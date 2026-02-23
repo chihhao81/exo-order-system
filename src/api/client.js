@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbxd9MNmY4mMqHCRpHjSA1oPMIVpFqtmRVl2-IUwUr3FQL9YcZtrYHybApiRv14rv7deaA/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbzbxt4SWbClLxcbeHRZiApoRA-SLsiZGtODPpWi5kUjBdPXoL4Yy_MYU9VBiJl2cp6ioQ/exec";
 
 const safeJson = async (response) => {
     const text = await response.text();
@@ -61,5 +61,23 @@ export const createCustomer = async (customerData, authKey) => {
     } catch (error) {
         console.warn("Fetch failed but backend likely succeeded (GAS redirect issue):", error);
         return { status: "success" };
+    }
+};
+export const arrangeShipment = async (orderNumber, authKey) => {
+    try {
+        const response = await fetch(`${BASE_URL}?action=arrange_shipment&auth=${encodeURIComponent(authKey)}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8",
+            },
+            body: JSON.stringify({ orderNumber }),
+        });
+
+        // GAS Web App POST often requires reading as text then parsing
+        const text = await response.text();
+        return JSON.parse(text);
+    } catch (error) {
+        console.error("Error arranging shipment:", error);
+        throw error;
     }
 };
