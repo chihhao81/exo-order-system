@@ -1,4 +1,4 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbzbxt4SWbClLxcbeHRZiApoRA-SLsiZGtODPpWi5kUjBdPXoL4Yy_MYU9VBiJl2cp6ioQ/exec";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbyJIYtkA5-q4WA6Da8eMkjCavY-bCyGCgJ4R8QJy9StU2-iKYOa4UhcTEZeBAI5qHZuMQ/exec";
 
 const safeJson = async (response) => {
     const text = await response.text();
@@ -16,9 +16,10 @@ const safeJson = async (response) => {
     }
 };
 
-export const getProducts = async () => {
+export const getProducts = async (authKey = "") => {
     try {
-        const response = await fetch(`${BASE_URL}?action=products`);
+        const url = authKey ? `${BASE_URL}?action=products&apiKey=${encodeURIComponent(authKey)}` : `${BASE_URL}?action=products`;
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Network response was not ok');
         return await safeJson(response);
     } catch (error) {
@@ -29,7 +30,7 @@ export const getProducts = async () => {
 
 export const createOrder = async (orderData, authKey) => {
     try {
-        await fetch(`${BASE_URL}?action=add_order&auth=${encodeURIComponent(authKey)}`, {
+        await fetch(`${BASE_URL}?action=add_order&apiKey=${encodeURIComponent(authKey)}`, {
             method: "POST",
             mode: "no-cors",
             headers: {
@@ -48,7 +49,7 @@ export const createOrder = async (orderData, authKey) => {
 
 export const createCustomer = async (customerData, authKey) => {
     try {
-        await fetch(`${BASE_URL}?action=add_customer&auth=${encodeURIComponent(authKey)}`, {
+        await fetch(`${BASE_URL}?action=add_customer&apiKey=${encodeURIComponent(authKey)}`, {
             method: "POST",
             mode: "no-cors",
             headers: {
@@ -65,7 +66,7 @@ export const createCustomer = async (customerData, authKey) => {
 };
 export const arrangeShipment = async (orderNumber, authKey) => {
     try {
-        const response = await fetch(`${BASE_URL}?action=arrange_shipment&auth=${encodeURIComponent(authKey)}`, {
+        const response = await fetch(`${BASE_URL}?action=arrange_shipment&apiKey=${encodeURIComponent(authKey)}`, {
             method: "POST",
             headers: {
                 "Content-Type": "text/plain;charset=utf-8",

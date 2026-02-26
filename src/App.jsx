@@ -17,10 +17,10 @@ function App() {
     });
     const [loadingProducts, setLoadingProducts] = useState(false);
 
-    const loadProducts = async () => {
+    const loadProducts = async (keyToUse = apiKey) => {
         setLoadingProducts(true);
         try {
-            const data = await getProducts();
+            const data = await getProducts(keyToUse);
             if (Array.isArray(data)) {
                 setProductsList(data);
                 localStorage.setItem('exo_products_cache', JSON.stringify(data));
@@ -86,7 +86,7 @@ function App() {
                         apiKey={apiKey}
                         productsList={productsList}
                         loadingProducts={loadingProducts}
-                        refreshProducts={loadProducts}
+                        refreshProducts={() => loadProducts(apiKey)}
                     />
                 )}
                 {activeTab === 'customer' && <CustomerForm apiKey={apiKey} />}
