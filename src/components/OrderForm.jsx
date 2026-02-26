@@ -57,15 +57,16 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
             const text = importText.trim();
             if (!text) return;
 
-            // Compact format v1: v1|customerId|timeItem|shippingFee|P:prod,sIdx,p,q,uIdx;...
-            if (text.startsWith('v1|')) {
+            // Compact format v2: v2|customerId|timeItem|shippingFee|bankId|P:prod,sIdx,p,q,uIdx;...
+            if (text.startsWith('v2|')) {
                 const parts = text.split('|');
-                if (parts.length < 5) throw new Error('Format error');
+                if (parts.length < 6) throw new Error('Format error');
 
-                const [, cust, time, fee, itemsPart] = parts;
+                const [, cust, time, fee, bankId, itemsPart] = parts;
                 setCustomerId(cust);
                 setTimeItem(time);
                 setShippingFee(parseInt(fee) || 0);
+                setSelectedBankId(bankId);
 
                 const importedItems = itemsPart.split(';').filter(Boolean).map(itemStr => {
                     const [p, sIdx, price, q, uIdx] = itemStr.split(',');
@@ -80,6 +81,15 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
                 });
                 if (importedItems.length > 0) setItems(importedItems);
                 alert('緊湊數據匯入成功！');
+            } else if (text.startsWith('v1|')) {
+                const parts = text.split('|');
+                if (parts.length < 5) throw new Error('Format error');
+
+                const [, cust, time, fee, itemsPart] = parts;
+                setCustomerId(cust);
+                setTimeItem(time);
+                setShippingFee(parseInt(fee) || 0);
+                // v1 doesn't have bankId, keep default or current
             } else {
                 // Legacy JSON support
                 const data = JSON.parse(text);
@@ -103,7 +113,7 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
             return `${i.product},${sIdx >= 0 ? sIdx : 0},${i.price},${i.quantity},${uIdx >= 0 ? uIdx : 0}`;
         }).join(';');
 
-        return `v1|${customerId}|${timeItem}|${shippingFee}|${itemStrings}`;
+        return `v2|${customerId}|${timeItem}|${shippingFee}|${selectedBankId}|${itemStrings}`;
     };
 
     const handleItemChange = (id, field, value) => {
@@ -241,6 +251,23 @@ ${bank.accountNumber}
                     onChange={e => setTimeItem(e.target.value)}
                     placeholder="例如：14:00 / 項目A"
                 />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label>匯款帳號 (預覽文字用)</label>
+                <select
+                    value={selectedBankId}
+                    onChange={e => setSelectedBankId(e.target.value)}
+                >
+                    {BANK_ACCOUNTS.map(acc => (
+                        <option key={acc.id} value={acc.id}>
+                            {acc.id}. {acc.label} - {acc.bankName}
+                        </option>
+                    ))}
+                </select>
+                <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>
+                    目前選擇：{BANK_ACCOUNTS.find(b => b.id === selectedBankId)?.bankName} ({BANK_ACCOUNTS.find(b => b.id === selectedBankId)?.accountNumber})
+                </div>
             </div>
 
             <div className="items-list">
@@ -451,22 +478,6 @@ ${bank.accountNumber}
                 />
             </div>
 
-            <div className="form-group" style={{ marginTop: '1rem' }}>
-                <label>匯款帳號</label>
-                <select
-                    value={selectedBankId}
-                    onChange={e => setSelectedBankId(e.target.value)}
-                >
-                    {BANK_ACCOUNTS.map(acc => (
-                        <option key={acc.id} value={acc.id}>
-                            {acc.id}. {acc.label} - {acc.bankName}
-                        </option>
-                    ))}
-                </select>
-                <div style={{ marginTop: '0.5rem', fontSize: '0.9rem', color: '#94a3b8' }}>
-                    帳號：{BANK_ACCOUNTS.find(b => b.id === selectedBankId)?.accountNumber}
-                </div>
-            </div>
 
             <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label>使用者匯款帳號 (末五碼/選填)</label>
