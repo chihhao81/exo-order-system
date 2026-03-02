@@ -39,12 +39,18 @@ const ArrangeShipmentTab = ({ apiKey }) => {
         const shippingType = is711 ? '' : '黑貓';
         const addressLabel = is711 ? '' : '地址：';
 
-        return `${itemLines}
+        let text = `${itemLines}`;
 
-${shippingType}
-姓名：${data.name}
-電話：${data.phone}
-${addressLabel}${data.address}`;
+        text += `\n\n${shippingType}\n姓名：${data.name}\n電話：${data.phone}\n${addressLabel}${data.address}`;
+
+        if (data.items && data.items[0] && data.items[0].timeItem) {
+            text += `\n時間：${data.items[0].timeItem}`;
+        }
+        if (data.note) {
+            text += `\n\n備註：${data.note}`;
+        }
+
+        return text;
     };
 
     const handleCopy = () => {

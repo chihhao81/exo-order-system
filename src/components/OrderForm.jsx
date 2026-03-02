@@ -3,7 +3,7 @@ import { createOrder } from '../api/client';
 import { BANK_ACCOUNTS } from '../constants';
 
 const SIZES = ['0.3cm以上', '0.5cm以上', '亞成成體', '無'];
-const UNITS = ['隻', '克', '個'];
+const UNITS = ['隻', '克', '個', '片', '包', '份', '無'];
 
 const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) => {
     // productsList and loadingProducts are now passed from props
@@ -20,8 +20,6 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
 
     const [customerId, setCustomerId] = useState('');
     const [orderDate, setOrderDate] = useState(() => {
-        const cached = localStorage.getItem('exo_orderDate');
-        if (cached) return cached;
         const d = new Date();
         return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getDate().toString().padStart(2, '0')}`;
     });
@@ -139,8 +137,10 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
 
     const formatProductName = (item) => {
         let name = item.product;
-        if (item.quantity && item.unit) {
+        if (item.quantity && item.unit && item.unit !== '無') {
             name += `${item.quantity}${item.unit}`;
+        } else if (item.quantity && (!item.unit || item.unit === '無')) {
+            name += `${item.quantity}`;
         }
         return name;
     };
@@ -150,7 +150,8 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
 
         const itemLines = items.map(item => {
             const sizeStr = item.size && item.size !== '無' ? `(${item.size})` : '';
-            return `#${item.product}${sizeStr} * ${item.quantity}${item.unit} = $${Number(item.price || 0).toLocaleString()}`;
+            const unitStr = item.unit && item.unit !== '無' ? item.unit : '';
+            return `#${item.product}${sizeStr} * ${item.quantity}${unitStr} = $${Number(item.price || 0).toLocaleString()}`;
         }).join('\n');
 
         let summaryLine = '';
@@ -204,8 +205,8 @@ ${bank.accountNumber}
                 orderDate: orderDate,
                 items: items.map(item => ({
                     name: item.product,
-                    quantity: item.quantity,
-                    unit: item.unit,
+                    quantity: item.unit === '無' ? '' : item.quantity,
+                    unit: item.unit === '無' ? '' : item.unit,
                     size: item.size,
                     price: item.price
                 })),
@@ -240,9 +241,61 @@ ${bank.accountNumber}
                 <h2 style={{ margin: 0 }}>建立訂單</h2>
             </div>
 
-            <div className="section-title" style={{ color: 'var(--primary-color)', fontSize: '0.9rem', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
-                第一階段：訂購與總結
+            <div className="section-title" style={{ color: 'var(--primary-color)', fontSize: '0.9rem', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>第一階段：訂購與總結</span>
+                <button
+                    className="refresh-btn"
+                    onClick={() => setShowImport(!showImport)}
+                    style={{
+                        padding: '0.2rem 0.6rem',
+                        fontSize: '0.8rem',
+                        borderColor: showImport ? 'var(--accent-color)' : 'var(--glass-border)',
+                        color: showImport ? 'var(--accent-color)' : '#94a3b8'
+                    }}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    {showImport ? '取消匯入' : '匯入數據'}
+                </button>
             </div>
+
+            {showImport && (
+                <div className="item-row glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', borderStyle: 'dashed' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <label style={{ fontSize: '0.85rem', color: 'var(--accent-color)', fontWeight: '600' }}>
+                            請貼上備份數據 (JSON 或壓縮字串)
+                        </label>
+                        <textarea
+                            value={importText}
+                            onChange={e => setImportText(e.target.value)}
+                            placeholder='v1|C00001|...'
+                            style={{
+                                width: '100%',
+                                height: '80px',
+                                background: 'rgba(0,0,0,0.3)',
+                                fontSize: '0.85rem',
+                                fontFamily: 'monospace',
+                                resize: 'none'
+                            }}
+                        />
+                        <button
+                            className="primary-btn"
+                            onClick={handleImport}
+                            style={{
+                                marginTop: 0,
+                                padding: '0.6rem',
+                                fontSize: '0.9rem',
+                                background: 'linear-gradient(135deg, var(--accent-color), #be185d)'
+                            }}
+                        >
+                            確認並載入數據
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="form-group">
                 <label>時間/項目 (選填)</label>
@@ -403,60 +456,8 @@ ${bank.accountNumber}
             </div>
 
             <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#94a3b8', fontSize: '0.9rem', fontWeight: 'bold', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem', margin: '2rem 0 1rem 0' }}>
-                <span>第二階段：匯款與正式入帳</span>
-                <button
-                    className="refresh-btn"
-                    onClick={() => setShowImport(!showImport)}
-                    style={{
-                        padding: '0.2rem 0.6rem',
-                        fontSize: '0.8rem',
-                        borderColor: showImport ? 'var(--accent-color)' : 'var(--glass-border)',
-                        color: showImport ? 'var(--accent-color)' : '#94a3b8'
-                    }}
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="7 10 12 15 17 10"></polyline>
-                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                    {showImport ? '取消匯入' : '匯入數據'}
-                </button>
+                第二階段：匯款與正式入帳
             </div>
-
-            {showImport && (
-                <div className="item-row glass-card" style={{ marginBottom: '1.5rem', background: 'rgba(255,255,255,0.02)', borderStyle: 'dashed' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        <label style={{ fontSize: '0.85rem', color: 'var(--accent-color)', fontWeight: '600' }}>
-                            請貼上備份數據 (JSON 或壓縮字串)
-                        </label>
-                        <textarea
-                            value={importText}
-                            onChange={e => setImportText(e.target.value)}
-                            placeholder='v1|C00001|...'
-                            style={{
-                                width: '100%',
-                                height: '80px',
-                                background: 'rgba(0,0,0,0.3)',
-                                fontSize: '0.85rem',
-                                fontFamily: 'monospace',
-                                resize: 'none'
-                            }}
-                        />
-                        <button
-                            className="primary-btn"
-                            onClick={handleImport}
-                            style={{
-                                marginTop: 0,
-                                padding: '0.6rem',
-                                fontSize: '0.9rem',
-                                background: 'linear-gradient(135deg, var(--accent-color), #be185d)'
-                            }}
-                        >
-                            確認並載入數據
-                        </button>
-                    </div>
-                </div>
-            )}
 
             <div className="form-group" style={{ marginTop: '1rem' }}>
                 <label>客戶編號</label>
