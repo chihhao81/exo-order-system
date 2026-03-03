@@ -33,7 +33,10 @@ const ArrangeShipmentTab = ({ apiKey }) => {
     const formatResultText = (data) => {
         if (!data) return '';
 
-        const itemLines = data.items.map(item => `${item.product} (${item.size || '無'})`).join('\n');
+        const itemLines = data.items.map(item => {
+            const size = item.size ? item.size.replace(/以上/g, '') : '無';
+            return `${item.product} (${size})`;
+        }).join('\n');
 
         const is711 = data.address.includes('7-11') && data.address.includes('門市');
         const shippingType = is711 ? '' : '黑貓';

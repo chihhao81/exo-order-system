@@ -20,7 +20,10 @@ describe('ArrangeShipmentTab', () => {
         // 由於我們目前主要改的是文字格式，我會直接驗證結果字串的包含關係
 
         const formatResultText = (data) => {
-            const itemLines = data.items.map(item => `${item.product} (${item.size || '無'})`).join('\n');
+            const itemLines = data.items.map(item => {
+                const size = item.size ? item.size.replace(/以上/g, '') : '無';
+                return `${item.product} (${size})`;
+            }).join('\n');
             const is711 = data.address.includes('7-11') && data.address.includes('門市');
             const shippingType = is711 ? '' : '黑貓';
             const addressLabel = is711 ? '' : '地址：';
@@ -36,5 +39,8 @@ describe('ArrangeShipmentTab', () => {
         expect(result).toContain('時間：14:00');
         expect(result).toContain('備註：急件');
         expect(result).toContain('產品A (大)');
+
+        const data2 = { items: [{ product: '產品B', size: '0.5cm以上' }], name: 'A', phone: '1', address: '7-11' };
+        expect(formatResultText(data2)).toContain('產品B (0.5cm)');
     });
 });
