@@ -446,7 +446,7 @@ ${bank.accountNumber}
             </div>
 
             <datalist id="products-datalist">
-                {productsList.map((p, i) => <option key={i} value={p} />)}
+                {productsList.map((p, i) => <option key={i} value={`${p.id} - ${p.name}`} />)}
             </datalist>
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
