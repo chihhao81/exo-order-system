@@ -115,8 +115,13 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
     };
 
     const handleItemChange = (id, field, value) => {
+        let finalValue = value;
+        if (field === 'product') {
+            // Strip "ID - " prefix if it exists to keep state clean
+            finalValue = value.replace(/^[^-]+-\s*/, '').trim();
+        }
         setItems(items.map(item =>
-            item.id === id ? { ...item, [field]: value } : item
+            item.id === id ? { ...item, [field]: finalValue } : item
         ));
     };
 
@@ -135,14 +140,9 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
         return itemsTotal + (parseInt(shippingFee) || 0);
     };
 
-    const formatProductName = (item) => {
-        let name = item.product;
-        if (item.quantity && item.unit && item.unit !== '無') {
-            name += `${item.quantity}${item.unit}`;
-        } else if (item.quantity && (!item.unit || item.unit === '無')) {
-            name += `${item.quantity}`;
-        }
-        return name;
+    const getFormattedName = (item) => {
+        const unit = item.unit === '無' ? '' : (item.unit || '');
+        return `${item.product}${item.quantity || ''}${unit}`;
     };
 
     const generateOrderText = () => {
@@ -204,7 +204,7 @@ ${bank.accountNumber}
                 customer: customerId,
                 orderDate: orderDate,
                 items: items.map(item => ({
-                    name: item.product,
+                    name: getFormattedName(item),
                     quantity: item.unit === '無' ? '' : item.quantity,
                     unit: item.unit === '無' ? '' : item.unit,
                     size: item.size,
