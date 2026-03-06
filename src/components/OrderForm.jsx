@@ -204,7 +204,7 @@ ${bank.accountNumber}
                 customer: customerId,
                 orderDate: orderDate,
                 items: items.map(item => ({
-                    name: getFormattedName(item),
+                    name: item.product,
                     quantity: item.unit === '無' ? '' : item.quantity,
                     unit: item.unit === '無' ? '' : item.unit,
                     size: item.size,
