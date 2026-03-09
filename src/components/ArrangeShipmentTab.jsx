@@ -34,17 +34,18 @@ const ArrangeShipmentTab = ({ apiKey }) => {
         if (!data) return '';
 
         const itemLines = data.items.map(item => {
-            const size = item.size ? item.size.replace(/以上/g, '') : '無';
-            return `${item.product} (${size})`;
+            const size = item.size ? item.size.replace(/以上/g, '') : '';
+            const sizeDisplay = size && size !== '無' ? ` (${size})` : '';
+            return `${item.product}${sizeDisplay}`;
         }).join('\n');
 
         const is711 = data.address.includes('7-11') && data.address.includes('門市');
-        const shippingType = is711 ? '' : '黑貓';
+        const shippingType = is711 ? '' : '\n黑貓';
         const addressLabel = is711 ? '' : '地址：';
 
         let text = `${itemLines}`;
 
-        text += `\n\n${shippingType}\n姓名：${data.name}\n電話：${data.phone}\n${addressLabel}${data.address}`;
+        text += `\n${shippingType}\n姓名：${data.name}\n電話：${data.phone}\n${addressLabel}${data.address}`;
 
         if (data.items && data.items[0] && data.items[0].timeItem) {
             text += `\n時間：${data.items[0].timeItem}`;
