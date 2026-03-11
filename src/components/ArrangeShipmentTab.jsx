@@ -48,7 +48,7 @@ const ArrangeShipmentTab = ({ apiKey }) => {
         text += `\n${shippingType}\n姓名：${data.name}\n電話：${data.phone}\n${addressLabel}${data.address}`;
 
         if (data.items && data.items[0] && data.items[0].timeItem) {
-            text += `\n時間：${data.items[0].timeItem}`;
+            text += `\n項目：${data.items[0].timeItem}`;
         }
         if (data.note) {
             text += `\n\n備註：${data.note}`;
