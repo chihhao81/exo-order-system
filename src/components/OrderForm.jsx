@@ -165,8 +165,8 @@ const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) =
         const generated = `
 ${itemLines}
 ${summaryLine}
-711寄送 +$60（不包寄送風險）
-黑貓寄送 +$200（全程開箱錄影，包寄送風險，若有死亡可選擇下次消費寄送或補運費直接寄送）
+711寄送 +$60
+黑貓寄送 +$130
 
 確認沒問題後請轉帳
 ${itemsTotal.toLocaleString()}+運費

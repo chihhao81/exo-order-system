@@ -51,7 +51,7 @@ const ArrangeShipmentTab = ({ apiKey }) => {
             text += `\n項目：${data.items[0].timeItem}`;
         }
         if (data.note) {
-            text += `\n\n備註：${data.note}`;
+            text += `\n備註：${data.note}`;
         }
 
         return text;
