@@ -4,5 +4,6 @@ export const BANK_ACCOUNTS = [
     { id: 'C', label: '鈞媽', bankName: '中國信託', bankCode: '822', accountNumber: '0000107531864731' },
     { id: 'D', label: '傑', bankName: '新光銀行', bankCode: '103', accountNumber: '0338501170734' },
     { id: 'E', label: '郁幃', bankName: '玉山銀行', bankCode: '808', accountNumber: '0370979223448' },
-    { id: 'F', label: '賣貨便', bankName: '賣貨便', bankCode: '', accountNumber: '' },
+    { id: 'F', label: '浩誠', bankName: '玉山銀行', bankCode: '808', accountNumber: '1296979068937' },
+    { id: 'Z', label: '賣貨便', bankName: '賣貨便', bankCode: '', accountNumber: '' },
 ];
