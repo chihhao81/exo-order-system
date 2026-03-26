@@ -2,7 +2,19 @@ import { useState, useEffect } from 'react';
 import { createOrder } from '../api/client';
 import { BANK_ACCOUNTS } from '../constants';
 
-const SIZES = ['0.3cm以上', '0.5cm以上', '亞成成體', '無'];
+const SIZES = [
+    '0.3cm以上',
+    '0.5cm以上',
+    '亞成成體',
+    '幼體',
+    '小亞成',
+    '0.5-1公分',
+    '1-1.5公分',
+    '1.5-2公分',
+    '2-2.5公分',
+    '3公分以上',
+    '無'
+];
 const UNITS = ['隻', '克', '個', '片', '包', '份', '無'];
 
 const OrderForm = ({ apiKey, productsList, loadingProducts, refreshProducts }) => {
